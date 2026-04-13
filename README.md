@@ -1,3 +1,5 @@
+![Pipeline Status](https://github.com/AbelBiruk100/cis-410-cybersecurity-automation/actions/workflows/hello-pipeline.yml/badge.svg)
+
 # CIS 410: Cybersecurity Automation
 
 ## About Me
