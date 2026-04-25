@@ -69,11 +69,12 @@ jobs:
 
           echo "=== Deploying ${GITHUB_SHA:0:7} from ${GITHUB_REF_NAME} ==="
 
-          sudo docker compose down || true
-          sudo docker compose up -d --build
+          ssudo docker-compose down || true
+          sudo docker-compose up -d --build
+          sudo docker-compose ps
 
           echo "=== Deploy complete ==="
-          sudo docker compose ps
+          sudo docker-compose ps
           EOF
 
           rm /tmp/deploy_key
