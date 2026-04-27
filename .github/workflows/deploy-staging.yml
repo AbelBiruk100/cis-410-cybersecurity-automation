@@ -1,0 +1,47 @@
+name: Deploy — Staging
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-staging:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy files to staging VM
+        run: |
+          echo "${{ secrets.STAGING_SSH_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+
+          scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r \
+          app/ Dockerfile docker-compose.yml \
+          ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/app/
+
+          rm /tmp/deploy_key
+
+      - name: Deploy to staging
+        run: |
+          echo "${{ secrets.STAGING_SSH_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+
+          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
+          ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} << 'EOF'
+          set -e
+          cd /opt/app
+
+          sudo docker compose down || true
+          sudo docker compose up -d --build
+          sudo docker compose ps
+          EOF
+
+          rm /tmp/deploy_key
+
+      - name: Smoke test
+        run: |
+          sleep 5
+          curl http://${{ secrets.STAGING_HOST }}:5001
