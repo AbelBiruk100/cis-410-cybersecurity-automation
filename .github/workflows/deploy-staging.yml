@@ -34,9 +34,9 @@ jobs:
           set -e
           cd /opt/app
 
-          sudo docker compose down || true
-          sudo docker compose up -d --build
-          sudo docker compose ps
+          sudo docker-compose down || true
+          sudo docker-compose up -d --build
+          sudo docker-compose ps
           EOF
 
           rm /tmp/deploy_key
