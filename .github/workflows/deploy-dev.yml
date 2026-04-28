@@ -74,7 +74,7 @@ jobs:
           sudo docker compose ps
 
           echo "=== Deploy complete ==="
-          sudo docker-compose ps
+          sudo docker compose ps
           EOF
 
           rm /tmp/deploy_key
