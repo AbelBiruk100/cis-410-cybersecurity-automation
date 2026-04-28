@@ -87,5 +87,8 @@ jobs:
       - name: Smoke test
         run: |
           sleep 4
-          curl -f "http://${{ secrets.DEV_HOST }}:5000/health" | python3 -m json.tool
-          echo "=== Smoke test passed — app is live at http://${{ secrets.DEV_HOST }}:5000 ==="
+          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
+          ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'EOF'
+          curl -f "http://localhost:5000/health" | python3 -m json.tool
+           echo "=== Smoke test passed ==="
+           EOF
