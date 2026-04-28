@@ -19,41 +19,33 @@ jobs:
           chmod 600 /tmp/deploy_key
 
           scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r \
-          app/ Dockerfile docker-compose.yml \
-          ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/app/
+            app/ Dockerfile docker-compose.yml \
+            ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/app/
 
           rm /tmp/deploy_key
 
       - name: Deploy to staging
-  run: |
-    echo "${{ secrets.STAGING_SSH_KEY }}" > /tmp/deploy_key
-    chmod 600 /tmp/deploy_key
+        run: |
+          echo "${{ secrets.STAGING_SSH_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
 
-    ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
-      ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} << 'EOF'
-    set -e
-    cd /opt/app
+          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} "
+          cd /opt/app
+          export PORT=5001
+          export ENVIRONMENT=staging
+          export WORKFLOW=deploy-staging.yml
+          sudo docker compose down || true
+          sudo docker compose up -d --build
+          sudo docker compose ps
+          "
 
-    export DEPLOY_TIME="$(date -u +"%Y-%m-%d %H:%M:%S UTC")"
-    export GITHUB_SHA="${GITHUB_SHA:-local}"
-    export GITHUB_REF_NAME="${GITHUB_REF_NAME:-main}"
+          rm /tmp/deploy_key
 
-    export PORT=5001
-    export ENVIRONMENT=staging
-    export WORKFLOW=deploy-staging.yml
-
-    sudo docker compose down || true
-    sudo docker compose up -d --build
-    sudo docker compose ps
-EOF
-
-    rm /tmp/deploy_key
-
-- name: Smoke test
-  run: |
-    echo "${{ secrets.STAGING_SSH_KEY }}" > /tmp/deploy_key
-    chmod 600 /tmp/deploy_key
-    sleep 5
-    ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} "curl -f http://127.0.0.1:5001/health | python3 -m json.tool"
-     echo "=== Smoke test passed ==="
-     rm /tmp/deploy_key
+      - name: Smoke test
+        run: |
+          echo "${{ secrets.STAGING_SSH_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          sleep 5
+          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} "curl -f http://127.0.0.1:5001/health | python3 -m json.tool"
+          echo "=== Smoke test passed ==="
+          rm /tmp/deploy_key
