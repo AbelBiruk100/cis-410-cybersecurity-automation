@@ -84,17 +84,12 @@ jobs:
       # Waits 4 seconds for the container to start, then calls the /health
       # endpoint. The -f flag makes curl return a non-zero exit code if the
       # HTTP response is 4xx or 5xx, which fails this step and the whole run.
+
       - name: Smoke test
-  run: |
-    echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
-    chmod 600 /tmp/deploy_key
-
-    sleep 4
-
-    ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
-      ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'EOF'
-    curl -f http://127.0.0.1:5000/health | python3 -m json.tool
-    echo "=== Smoke test passed ==="
-EOF
-
-    rm /tmp/deploy_key
+        run: |
+         echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
+         chmod 600 /tmp/deploy_key
+         sleep 4
+         ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} "curl -f http://127.0.0.1:5000/health | python3 -m json.tool"
+         echo "=== Smoke test passed ==="
+         rm /tmp/deploy_key
