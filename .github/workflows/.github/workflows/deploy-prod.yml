@@ -1,0 +1,48 @@
+name: Deploy — Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-prod:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy files to production VM
+        run: |
+          echo "${{ secrets.PROD_SSH_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+
+          scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r \
+            app/ Dockerfile docker-compose.yml \
+            ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/app/
+
+          rm /tmp/deploy_key
+
+      - name: Deploy to production
+        run: |
+          echo "${{ secrets.PROD_SSH_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+
+          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} "
+          cd /opt/app
+          PORT=5002 ENVIRONMENT=production WORKFLOW=deploy-prod.yml sudo -E docker compose down --remove-orphans || true
+          PORT=5002 ENVIRONMENT=production WORKFLOW=deploy-prod.yml sudo -E docker compose up -d --build
+          sudo docker compose ps
+          "
+
+          rm /tmp/deploy_key
+
+      - name: Smoke test
+        run: |
+          echo "${{ secrets.PROD_SSH_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          sleep 5
+          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} "curl -f http://127.0.0.1:5002/health | python3 -m json.tool"
+          echo "=== Smoke test passed ==="
+          rm /tmp/deploy_key
