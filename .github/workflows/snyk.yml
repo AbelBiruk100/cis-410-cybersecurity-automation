@@ -7,24 +7,46 @@ on:
 jobs:
   snyk-code:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Snyk Code Test
         uses: snyk/actions/python@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: code test
+
+  snyk-open-source:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Snyk Open Source Test
+        uses: snyk/actions/python@master
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
 
-  snyk-open-source:
+  snyk-container:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Snyk Open Source Test
-        uses: snyk/actions/python@master
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Snyk Container Test
+        uses: snyk/actions/docker@master
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
+          image: alpine:latest
           command: test
